@@ -32,3 +32,6 @@ class Customer(models.Model):
         print(cart)
         print(f"Cart: {self.cart}")
         return super(Customer, self).save(*args, **kwargs)
+
+    def __str__(self) -> str:
+        return f"{self.user.email}"

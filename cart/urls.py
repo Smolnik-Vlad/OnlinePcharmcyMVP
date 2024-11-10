@@ -1,6 +1,6 @@
 from django.urls import path
 
-from cart.views import CartPositionView, CartPositionRetrieveUpdateDelete
+from cart.views import CartPositionView, CartPositionRetrieveUpdateDelete, RatingGetByProduct
 
 urlpatterns = [
     # path('<int:id>/edit/', CartListUpdateCreatePositionsView.as_view()),  # endpoint to get list of customers

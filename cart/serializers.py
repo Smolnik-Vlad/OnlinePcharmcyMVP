@@ -4,7 +4,7 @@ from rest_framework import serializers
 
 from cart.models import Position, Cart
 from catalog.models import Product
-from catalog.serializers import SimpleProductSerializer
+from catalog.serializers import ProductSerializer
 
 
 class PositionSerializer(serializers.ModelSerializer):
@@ -19,8 +19,6 @@ class PositionSerializer(serializers.ModelSerializer):
         cart_id = self.context.get("card_id")
         product = attrs.get("product_id")
         amount = attrs.get("amount")
-        print(self.context.items())
-        print(f"data: {cart_id} -- {product} -- {amount}")
 
         # Проверка существования корзины
         if not Cart.objects.filter(id=cart_id).exists():
@@ -28,7 +26,6 @@ class PositionSerializer(serializers.ModelSerializer):
 
         # Проверка существования продукта
         try:
-            print(Product.objects.all())
             product_instance = Product.objects.get(id=product)
         except Product.DoesNotExist:
             raise serializers.ValidationError("Product does not exist.")
@@ -81,3 +78,4 @@ class CartSerializer(serializers.ModelSerializer):
     class Meta:
         model = Cart
         fields = ["id", "positions", "numb_of_positions", "total_price"]
+        lookup_field = "product_id"

@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from catalog.models import Product
+from catalog.models import Product, Rating
 
 
 # Register your models here.
@@ -20,3 +20,13 @@ class ProductAdmin(admin.ModelAdmin):
         "amount",
     )
     empty_value_display = "undefined"
+
+
+@admin.register(Rating)
+class RatingAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "product",
+        "customer",
+        "rating"
+    )

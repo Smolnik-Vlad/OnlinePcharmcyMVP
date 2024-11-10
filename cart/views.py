@@ -9,6 +9,8 @@ from rest_framework.response import Response
 from cart.models import Position, Cart
 from cart.permissions import IsCustomerOwner
 from cart.serializers import PositionSerializer
+from catalog.models import Rating
+from catalog.serializers import RatingSerializer
 
 
 # Create your views here.
@@ -44,7 +46,6 @@ class CartPositionView(mixins.ListModelMixin,
         Checks the product's stock availability before adding.
         """
         res = self.create(request, *args, **kwargs)
-        print(f"res: {res.data}")
         return res
 
     def get(self, request, *args, **kwargs):
@@ -84,3 +85,38 @@ class CartPositionRetrieveUpdateDelete(mixins.RetrieveModelMixin,
 
     def delete(self, request, *args, **kwargs):
         return self.destroy(request, *args, **kwargs)
+
+
+@swagger_auto_schema(
+    operation_description="Add a rating to position",
+    request_body=RatingSerializer,
+    responses={
+        201: openapi.Response("Rating added successfully", RatingSerializer),
+        400: "Amount exceeds available stock."
+    }
+)
+class RatingCreateUpdate(mixins.CreateModelMixin,
+                         generics.GenericAPIView):
+    serializer_class = RatingSerializer
+    permission_classes = (IsAuthenticated, IsCustomerOwner)
+
+    queryset = Rating.objects.all()
+
+    def post(self, request, *args, **kwargs):
+        """
+        Handles adding a new rating for a product.
+        """
+        res = self.create(request, *args, **kwargs)
+        return res
+
+
+class RatingGetByProduct(mixins.ListModelMixin, generics.GenericAPIView):
+    serializer_class = RatingSerializer
+
+    lookup_field = ['product_id']
+
+    def get_queryset(self):
+        return Rating.objects.filter(product_id=self.kwargs['product_id'])
+
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)

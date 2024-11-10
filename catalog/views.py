@@ -1,14 +1,14 @@
 from rest_framework import mixins, generics
 
 from catalog.models import Product
-from catalog.serializers import SimpleProductSerializer
+from catalog.serializers import ProductSerializer
 
 
 class CatalogListView(mixins.CreateModelMixin,
                       mixins.ListModelMixin,
                       generics.GenericAPIView):
     queryset = Product.in_stock.all()
-    serializer_class = SimpleProductSerializer
+    serializer_class = ProductSerializer
 
     search_fields = ("^title",)
     ordering_fields = ("price",)
@@ -34,7 +34,7 @@ class CatalogRetrieveUpdateDeleteView(mixins.RetrieveModelMixin,
     updating or deleting catalog items by administration.
     """
     queryset = Product.objects.all()
-    serializer_class = SimpleProductSerializer
+    serializer_class = ProductSerializer
     lookup_field = "id"
 
     # permission_classes = (
