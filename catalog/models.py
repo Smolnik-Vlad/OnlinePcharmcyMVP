@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models import Avg
 
 from catalog.managers import ProductInStockManager
 
@@ -27,7 +28,12 @@ class Product(models.Model):
         """
         Returns product URL for SimpleProductSerializer.
         """
-        return "http://127.0.0.1:8000/catalog/{}".format(self.pk)
+        return "http://127.0.0.1:8000/catalog/{}".format(self.id)
+
+    @property
+    def average_rating(self):
+        average = self.rating.aggregate(average=Avg('rating'))['average']
+        return average if average is not None else 0
 
     class Meta:
         verbose_name = 'product'
@@ -40,14 +46,19 @@ class Product(models.Model):
 
 
 class Rating(models.Model):
-    product = models.OneToOneField(Product, on_delete=models.CASCADE, related_name='rating')
-    rating_set = models.JSONField(default=dict, blank=True)
-    slug = models.SlugField(max_length=100, null=True, blank=True, editable=False)
+    from users.models import Customer
 
-    @property
-    def average_rating(self) -> float:
-        ratings = [rating for rating in self.rating_set.values()]
-        return sum(ratings) / len(ratings) if len(ratings) > 0 else None
+    RATING_CHOICES = [
+        (1, 1),
+        (2, 2),
+        (3, 3),
+        (4, 4),
+        (5, 5),
+    ]
+
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='rating')
+    customer = models.ForeignKey(Customer, on_delete=models.CASCADE, related_name='rating')
+    rating = models.IntegerField(choices=RATING_CHOICES)
 
 
 class Comments(models.Model):
@@ -56,7 +67,6 @@ class Comments(models.Model):
                                  blank=True)
     changed_at = models.DateTimeField(auto_now_add=True, auto_now=False)
     comment_field = models.TextField()
-    checked = models.BooleanField(default=False)
 
     @property
     def commenters_name(self):
@@ -71,5 +81,3 @@ class Tag(models.Model):
     product = models.ManyToManyField(Product,
                                      related_name="tags"
                                      )
-
-

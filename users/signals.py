@@ -7,3 +7,4 @@ from users.models import Customer
 @receiver(post_delete, sender=Customer)
 def delete_customer(sender, instance, **kwargs):
     instance.user.delete()
+

@@ -1,6 +1,5 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
-from django.template.defaultfilters import slugify
 from django.utils.translation import gettext_lazy as _
 
 from cart.models import Cart
@@ -25,3 +24,11 @@ class Customer(models.Model):
     class Meta:
         verbose_name = "customer"
         verbose_name_plural = "customers"
+
+    def save(self, *args, **kwargs):
+        cart = Cart()
+        cart.save()
+        self.cart = cart
+        print(cart)
+        print(f"Cart: {self.cart}")
+        return super(Customer, self).save(*args, **kwargs)

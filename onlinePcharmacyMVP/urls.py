@@ -48,6 +48,8 @@ urlpatterns = [
     path('admin/', admin.site.urls),
 
     path('users/', include('users.urls')),
+    path('catalog/', include('catalog.urls')),
+    path('cart/', include('cart.urls')),
 
     path('healthcheck/', healthcheck, name='healthcheck'),
 
