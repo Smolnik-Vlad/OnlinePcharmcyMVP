@@ -59,13 +59,13 @@ class CartPositionRetrieveUpdateDelete(mixins.RetrieveModelMixin,
                                        mixins.DestroyModelMixin,
                                        generics.GenericAPIView):
     permission_classes = (IsCustomerOwner, IsAuthenticated)
-    lookup_field = ['id']
+    lookup_field = ['position_id']
 
     serializer_class = PositionSerializer
 
     def get_object(self):
         # Получение позиции корзины по ID и привязанной к текущему пользователю
-        position = Position.objects.filter(id=self.kwargs['id'], cart_id=self.request.user.customer.cart.id).first()
+        position = Position.objects.filter(id=self.kwargs['position_id'], cart_id=self.request.user.customer.cart.id).first()
 
         if position is None:
             raise NotFound(detail="Position not found.")
@@ -87,36 +87,3 @@ class CartPositionRetrieveUpdateDelete(mixins.RetrieveModelMixin,
         return self.destroy(request, *args, **kwargs)
 
 
-@swagger_auto_schema(
-    operation_description="Add a rating to position",
-    request_body=RatingSerializer,
-    responses={
-        201: openapi.Response("Rating added successfully", RatingSerializer),
-        400: "Amount exceeds available stock."
-    }
-)
-class RatingCreateUpdate(mixins.CreateModelMixin,
-                         generics.GenericAPIView):
-    serializer_class = RatingSerializer
-    permission_classes = (IsAuthenticated, IsCustomerOwner)
-
-    queryset = Rating.objects.all()
-
-    def post(self, request, *args, **kwargs):
-        """
-        Handles adding a new rating for a product.
-        """
-        res = self.create(request, *args, **kwargs)
-        return res
-
-
-class RatingGetByProduct(mixins.ListModelMixin, generics.GenericAPIView):
-    serializer_class = RatingSerializer
-
-    lookup_field = ['product_id']
-
-    def get_queryset(self):
-        return Rating.objects.filter(product_id=self.kwargs['product_id'])
-
-    def get(self, request, *args, **kwargs):
-        return self.list(request, *args, **kwargs)
