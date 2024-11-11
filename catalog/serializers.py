@@ -4,6 +4,7 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError, NotFound
 
 from catalog.models import Product, Rating, Comments
+from catalog.tools import check_comment_tool
 from users.models import Customer
 
 
@@ -79,7 +80,6 @@ class CommentSerializer(serializers.ModelSerializer):
         fields = ('product_id', 'customer_email', 'comment_field', 'changed_at', 'id')
         read_only_fields = ['changed_at', 'product_id', 'id', 'customer_email']
 
-
     def validate(self, attrs):
         product_id = self.context.get('product_id')
         if not Product.objects.filter(id=product_id).exists():
@@ -88,9 +88,8 @@ class CommentSerializer(serializers.ModelSerializer):
         return attrs
 
     def validate_comment_field(self, value):
-        if "badword" in value.lower():
+        if check_comment_tool.check_toxicity(value):
             raise serializers.ValidationError("Comment field contains inappropriate content.")
-
         return value
 
     def save(self, **kwargs):
