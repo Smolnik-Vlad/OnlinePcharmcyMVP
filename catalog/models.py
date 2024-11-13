@@ -46,7 +46,6 @@ class Product(models.Model):
 
 
 class Rating(models.Model):
-
     RATING_CHOICES = [
         (1, 1),
         (2, 2),
@@ -60,7 +59,7 @@ class Rating(models.Model):
     rating = models.IntegerField(choices=RATING_CHOICES)
 
 
-class Comments(models.Model):
+class Comment(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='comment')
     customer = models.ForeignKey('users.Customer', on_delete=models.CASCADE, related_name='comment', null=True,
                                  blank=True)
@@ -76,7 +75,10 @@ class Comments(models.Model):
 
 
 class Tag(models.Model):
-    tag = models.CharField
+    title = models.CharField(max_length=20, default='', blank=True)
     product = models.ManyToManyField(Product,
                                      related_name="tags"
                                      )
+
+    def __str__(self) -> str:
+        return self.title

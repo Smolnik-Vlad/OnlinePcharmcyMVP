@@ -3,8 +3,8 @@ from random import choices
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError, NotFound
 
-from catalog.models import Product, Rating, Comments
-from catalog.tools import check_comment_tool
+from catalog.models import Product, Rating, Comment, Tag
+from catalog.check_comment_tool import check_comment_tool
 from users.models import Customer
 
 
@@ -13,6 +13,7 @@ class ProductSerializer(serializers.ModelSerializer):
     url = serializers.URLField(read_only=True)
     price = serializers.FloatField()
     average_rating = serializers.SerializerMethodField()
+    tags = serializers.ListSerializer(child=serializers.CharField(), allow_empty=True)
 
     def get_average_rating(self, obj):
         """
@@ -29,6 +30,22 @@ class ProductSerializer(serializers.ModelSerializer):
                 "lookup_field": "id"
             }
         }
+
+    def save(self, **kwargs):
+        list_of_tags_str = self.validated_data.pop('tags', [])
+        product: Product = super(ProductSerializer, self).save(**kwargs)
+        print(list_of_tags_str)
+        for tag_str in list_of_tags_str:
+            current_tag, created = Tag.objects.get_or_create(
+                title=tag_str,
+                defaults={
+                    'title': tag_str
+                }
+            )
+            current_tag.product.add(product)
+        product.tags.set(Tag.objects.filter(product=product))
+
+        return product
 
 
 class RatingSerializer(serializers.ModelSerializer):
@@ -76,7 +93,7 @@ class CommentSerializer(serializers.ModelSerializer):
     customer_email = serializers.ReadOnlyField(source='customer.user.email')
 
     class Meta:
-        model = Comments
+        model = Comment
         fields = ('product_id', 'customer_email', 'comment_field', 'changed_at', 'id')
         read_only_fields = ['changed_at', 'product_id', 'id', 'customer_email']
 

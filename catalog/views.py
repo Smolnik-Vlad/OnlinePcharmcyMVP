@@ -1,10 +1,14 @@
+from django.db.models import Count
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
-from rest_framework import mixins, generics
+from rest_framework import mixins, generics, status
+from rest_framework.decorators import api_view
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 
 from cart.permissions import IsCustomerOwner
-from catalog.models import Product, Comments, Rating
+from catalog.get_tags_tool import key_words_extractor
+from catalog.models import Product, Comment, Rating, Tag
 from catalog.serializers import ProductSerializer, CommentSerializer, RatingSerializer
 
 
@@ -101,7 +105,7 @@ class CommentCreateList(mixins.CreateModelMixin,
         return context
 
     def get_queryset(self):
-        queryset = Comments.objects.filter(product_id=self.kwargs['product_id'])
+        queryset = Comment.objects.filter(product_id=self.kwargs['product_id'])
         return queryset
 
     def get(self, request, *args, **kwargs):
@@ -117,3 +121,35 @@ class CommentCreateList(mixins.CreateModelMixin,
     )
     def post(self, request, *args, **kwargs):
         return self.create(request, *args, **kwargs)
+
+
+@swagger_auto_schema(
+    method='post',
+    request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={
+            'description': openapi.Schema(type=openapi.TYPE_STRING, description='Here is your request'),
+        },
+        required=['description']
+    ),
+    operation_description="Enter your request",
+    responses={200: "Resource created successfully"}
+)
+@api_view(['POST'])
+def search_product_by_description(request):
+    description = request.data.get('description', None)
+    if not description:
+        return Response(
+            {"error": "Name is required"},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    keywords = key_words_extractor.extract_keywords(description)
+    tags = Tag.objects.filter(title__in=keywords)
+    products = Product.objects.filter(tags__in=tags) \
+        .annotate(matching_tags=Count('tags')) \
+        .order_by('-matching_tags')
+    crossed_tags = tags & products[0].tags.all()
+    serialized_data = [{"product_id": product.id, "product_url": product.url, "product_title": product.title,
+                        "matching_tags": [tag.title for tag in crossed_tags]} for product in products]
+
+    return Response(serialized_data)
