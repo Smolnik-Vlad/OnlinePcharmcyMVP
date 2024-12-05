@@ -137,19 +137,37 @@ class CommentCreateList(mixins.CreateModelMixin,
 )
 @api_view(['POST'])
 def search_product_by_description(request):
-    description = request.data.get('description', None)
-    if not description:
-        return Response(
-            {"error": "Name is required"},
-            status=status.HTTP_400_BAD_REQUEST
-        )
-    keywords = key_words_extractor.extract_keywords(description)
-    tags = Tag.objects.filter(title__in=keywords)
-    products = Product.objects.filter(tags__in=tags) \
-        .annotate(matching_tags=Count('tags')) \
-        .order_by('-matching_tags')
-    crossed_tags = tags & products[0].tags.all()
-    serialized_data = [{"product_id": product.id, "product_url": product.url, "product_title": product.title,
-                        "matching_tags": [tag.title for tag in crossed_tags]} for product in products]
+    try:
+        description = request.data.get('description', None)
+        if not description:
+            return Response(
+                {"error": "Name is required"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        keywords = key_words_extractor.extract_keywords(description)
+        print(f"{keywords=}")
+        tags = Tag.objects.filter(title__in=keywords)
+        print(f"{tags=}")
+        products = Product.objects.filter(tags__in=tags) \
+            .annotate(matching_tags=Count('tags')) \
+            .order_by('-matching_tags')
 
-    return Response(serialized_data)
+        print(f"Prod: {products}")
+        serialized_data = [{"addition_date": product.addition_date,
+                            "amount": product.amount,
+                            "average_rating": product.average_rating,
+                            "barcode": product.barcode,
+                            "brand": product.brand,
+                            "expiration_date": product.expiration_date,
+                            "id": product.id,
+                            "info": product.info,
+                            "is_in_stock": product.is_in_stock,
+                            "price": product.price,
+                            # "tags": product.tags,
+                            "title": product.title,
+                            "url": product.url
+                            } for product in products]
+
+        return Response(serialized_data)
+    except Exception:
+        return Response({})

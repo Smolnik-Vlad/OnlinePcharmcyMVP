@@ -24,7 +24,8 @@ SECRET_KEY = 'django-insecure-ffhmdm2%ezur%39hq+(rcdonp$hgit(cc9%12m2j+d81nhs(#m
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
+CORS_ALLOW_ALL_ORIGINS = True
 
 # Application definition
 
@@ -186,6 +187,11 @@ SWAGGER_SETTINGS = {
         'Bearer': {
             'type': 'apiKey',
             'name': 'Authorization',
+            'in': 'header'
+        },
+        'Ngrok-Skip-Warning': {
+            'type': 'apiKey',
+            'name': 'ngrok-skip-browser-warning',
             'in': 'header'
         }
     }
